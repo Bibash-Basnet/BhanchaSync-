@@ -13,10 +13,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // --- Identity (Users + Roles: Admin, Waiter, Kitchen) ---
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
-    {
-        // Reasonable defaults for now; we'll revisit password rules later.
-        options.SignIn.RequireConfirmedAccount = false;
-    })
+{
+    options.SignIn.RequireConfirmedAccount = false;
+})
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
@@ -24,6 +23,13 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+// --- Seed sample data (dev convenience, safe to leave in for now) ---
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    SeedData.Initialize(db);
+}
 
 // --- HTTP pipeline ---
 if (!app.Environment.IsDevelopment())
