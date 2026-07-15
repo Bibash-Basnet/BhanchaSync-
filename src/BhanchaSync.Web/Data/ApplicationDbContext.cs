@@ -17,16 +17,24 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
 
+    // Note: property named "Tables" (plural) rather than "Table" —
+    // TABLE is a reserved SQL keyword, so this avoids any naming friction
+    // in the generated database schema.
+    public DbSet<Table> Tables => Set<Table>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
-        // A category can have many menu items; deleting a category
-        // should not silently delete its items, so we restrict that.
         builder.Entity<MenuItem>()
             .HasOne(m => m.Category)
             .WithMany(c => c.MenuItems)
             .HasForeignKey(m => m.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Table numbers should be unique — no two tables sharing a number.
+        builder.Entity<Table>()
+            .HasIndex(t => t.Number)
+            .IsUnique();
     }
 }
