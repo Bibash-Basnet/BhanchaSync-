@@ -1,0 +1,43 @@
+@model IEnumerable<BhanchaSync.Web.Models.Table>
+
+@{
+    ViewData["Title"] = "Tables";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Floor View</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Add Table</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No tables added yet.</p>
+}
+else
+{
+    <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
+        @foreach (var table in Model)
+        {
+            var badgeClass = table.Status switch
+            {
+                BhanchaSync.Web.Models.TableStatus.Available => "bg-success",
+                BhanchaSync.Web.Models.TableStatus.Occupied => "bg-danger",
+                BhanchaSync.Web.Models.TableStatus.Reserved => "bg-warning text-dark",
+                _ => "bg-secondary"
+            };
+
+            <div class="col">
+                <div class="card text-center h-100 shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title">Table @table.Number</h4>
+                        <span class="badge @badgeClass mb-3">@table.Status</span>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a asp-action="Edit" asp-route-id="@table.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@table.Id" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
