@@ -19,16 +19,23 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
 // --- MVC ---
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// --- Seed sample data (dev convenience, safe to leave in for now) ---
+// --- Seed sample data + identity roles/admin (dev convenience) ---
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     SeedData.Initialize(db);
+    await IdentitySeed.InitializeAsync(scope.ServiceProvider);
 }
 
 // --- HTTP pipeline ---
