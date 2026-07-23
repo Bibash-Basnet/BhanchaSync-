@@ -5,8 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BhanchaSync.Web.Data;
 
-// Inherits from IdentityDbContext so we get Users, Roles, and related
-// Identity tables automatically.
 public class ApplicationDbContext : IdentityDbContext<IdentityUser>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -16,11 +14,9 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
-
-    // Note: property named "Tables" (plural) rather than "Table" —
-    // TABLE is a reserved SQL keyword, so this avoids any naming friction
-    // in the generated database schema.
     public DbSet<Table> Tables => Set<Table>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -32,9 +28,41 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
             .HasForeignKey(m => m.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Table numbers should be unique — no two tables sharing a number.
         builder.Entity<Table>()
             .HasIndex(t => t.Number)
             .IsUnique();
+
+        // An order optionally belongs to a table (null for Takeout).
+        // Restrict delete: you shouldn't be able to delete a table
+        // that has order history pointing at it.
+        builder.Entity<Order>()
+            .HasOne(o => o.Table)
+            .WithMany()
+            .HasForeignKey(o => o.TableId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Restrict delete: don't allow deleting a user account that has
+        // order history tied to it as the waiter.
+        builder.Entity<Order>()
+            .HasOne(o => o.Waiter)
+            .WithMany()
+            .HasForeignKey(o => o.WaiterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Cascade delete: if an order is deleted, its line items go with it
+        // (an OrderItem has no meaning without its parent Order).
+        builder.Entity<OrderItem>()
+            .HasOne(oi => oi.Order)
+            .WithMany(o => o.OrderItems)
+            .HasForeignKey(oi => oi.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Restrict delete: don't allow deleting a menu item that's
+        // referenced by historical order items.
+        builder.Entity<OrderItem>()
+            .HasOne(oi => oi.MenuItem)
+            .WithMany()
+            .HasForeignKey(oi => oi.MenuItemId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
