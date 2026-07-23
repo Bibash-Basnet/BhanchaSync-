@@ -1,0 +1,59 @@
+@model IEnumerable<BhanchaSync.Web.Models.Order>
+
+@{
+    ViewData["Title"] = "Active Orders";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Active Orders</h1>
+    @if (User.IsInRole("Admin") || User.IsInRole("Waiter"))
+    {
+        <a asp-action="Create" class="btn btn-primary">+ New Order</a>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No active orders right now.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        @foreach (var order in Model)
+        {
+            var statusClass = order.Status switch
+            {
+                BhanchaSync.Web.Models.OrderStatus.Placed => "bg-secondary",
+                BhanchaSync.Web.Models.OrderStatus.Preparing => "bg-warning text-dark",
+                BhanchaSync.Web.Models.OrderStatus.Ready => "bg-info text-dark",
+                BhanchaSync.Web.Models.OrderStatus.Served => "bg-success",
+                _ => "bg-light text-dark"
+            };
+
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <strong>
+                            @(order.OrderType == BhanchaSync.Web.Models.OrderType.DineIn
+                                ? $"Table {order.Table?.Number}"
+                                : "Takeout")
+                        </strong>
+                        <span class="badge @statusClass">@order.Status</span>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-2">
+                            @foreach (var item in order.OrderItems)
+                            {
+                                <li>
+                                    @item.Quantity &times; @item.MenuItem?.Name
+                                    <span class="text-muted small">(@item.Status)</span>
+                                </li>
+                            }
+                        </ul>
+                        <p class="text-muted small mb-0">Placed @order.CreatedAt.ToLocalTime().ToString("g")</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

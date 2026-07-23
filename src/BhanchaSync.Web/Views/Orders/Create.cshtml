@@ -1,0 +1,82 @@
+@model BhanchaSync.Web.Models.OrderCreateViewModel
+
+@{
+    ViewData["Title"] = "New Order";
+    var tables = (List<BhanchaSync.Web.Models.Table>)ViewBag.Tables;
+}
+
+<h1 class="mb-4">New Order</h1>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <label class="form-label">Order Type</label>
+            <select asp-for="OrderType" id="orderTypeSelect" class="form-select"
+                    asp-items="Html.GetEnumSelectList<BhanchaSync.Web.Models.OrderType>()">
+            </select>
+        </div>
+        <div class="col-md-3" id="tableSelectWrapper">
+            <label asp-for="TableId" class="form-label">Table</label>
+            <select asp-for="TableId" class="form-select">
+                <option value="">-- Select Table --</option>
+                @foreach (var table in tables)
+                {
+                    <option value="@table.Id">Table @table.Number</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <h4 class="mb-3">Menu Items</h4>
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th style="width:110px">Price</th>
+                <th style="width:110px">Quantity</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.MenuItems.Count; i++)
+            {
+                <tr>
+                    <td>
+                        @Model.MenuItems[i].Name
+                        <input type="hidden" asp-for="MenuItems[i].MenuItemId" />
+                        <input type="hidden" asp-for="MenuItems[i].Name" />
+                        <input type="hidden" asp-for="MenuItems[i].Price" />
+                    </td>
+                    <td>Rs. @Model.MenuItems[i].Price</td>
+                    <td>
+                        <input asp-for="MenuItems[i].Quantity" type="number" min="0" max="50" class="form-control" />
+                    </td>
+                    <td>
+                        <input asp-for="MenuItems[i].Notes" class="form-control" placeholder="e.g. no onions" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Submit Order</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <script>
+        // Simple UX touch: hide the table dropdown entirely for Takeout orders,
+        // since a takeout order has no table.
+        const orderTypeSelect = document.getElementById('orderTypeSelect');
+        const tableSelectWrapper = document.getElementById('tableSelectWrapper');
+
+        function toggleTableVisibility() {
+            tableSelectWrapper.style.display = orderTypeSelect.value === 'Takeout' ? 'none' : '';
+        }
+
+        orderTypeSelect.addEventListener('change', toggleTableVisibility);
+        toggleTableVisibility();
+    </script>
+}
